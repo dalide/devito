@@ -96,6 +96,7 @@ class Operator(Callable):
         clusters = clusterize(expressions)
         clusters = rewrite(clusters, mode=set_dse_mode(dse))
         self.offsets = retrieve_offsets(clusters.ispace)
+        from IPython import embed; embed()
 
         # Wrap expressions with Iterations according to dimensions
         nodes = self._schedule_expressions(clusters)

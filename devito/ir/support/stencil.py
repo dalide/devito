@@ -3,7 +3,7 @@ from collections import namedtuple
 from sympy import Eq
 
 from devito.dimension import Dimension
-from devito.ir.support.domain import Interval, Box
+from devito.ir.support.domain import Interval, Space
 from devito.symbolics import retrieve_indexed
 from devito.tools import DefaultOrderedDict, flatten
 
@@ -151,9 +151,9 @@ class Stencil(DefaultOrderedDict):
 
     def boxify(self):
         """
-        Create a :class:`Box` from ``self``, with as many intervals as dimensions.
+        Create a :class:`Space` from ``self``, with as many intervals as dimensions.
         """
-        return Box([Interval(k, min(v), max(v)) for k, v in self.items()])
+        return Space([Interval(k, min(v), max(v)) for k, v in self.items()])
 
     def __eq__(self, other):
         return self.entries == other.entries

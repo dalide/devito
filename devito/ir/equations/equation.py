@@ -1,6 +1,6 @@
 import sympy
 
-from devito.ir.support import Box, Interval, Stencil
+from devito.ir.support import Interval, Space, Stencil
 from devito.symbolics import dimension_sort, indexify
 
 __all__ = ['Eq']
@@ -9,14 +9,14 @@ __all__ = ['Eq']
 class Eq(sympy.Eq):
 
     """
-    A new SymPy equation with an associated data space.
+    A new SymPy equation with an associated iteration space.
 
     All :class:`Function` objects within ``expr`` get indexified and thus turned
     into objects of type :class:`types.Indexed`.
 
-    A data space is an object of type :class:`Box`. It represents the data points
-    accessed by the equation along each iteration :class:`Dimension`. The iteration
-    :class:`Dimension`s are extracted from the :class:`Indexed`s of the equation.
+    An iteration space is an object of type :class:`Space`. It represents the
+    data points accessed by the equation along each :class:`Dimension`. The
+    :class:`Dimension`s are extracted directly from the equation.
     """
 
     def __new__(cls, input_expr, subs=None):
@@ -35,13 +35,11 @@ class Eq(sympy.Eq):
 
         # Well-defined dimension ordering
         ordering = dimension_sort(expr, key=lambda i: not i.is_Time)
-        parents = [d.parent for d in ordering if d.is_Stepping]
-        ordering = [i for i in ordering if i not in parents]
 
-        # Data space derivation
+        # Derive iteration space
         stencil = Stencil(expr)
-        expr.dspace = Box([Interval(i, min(stencil.get(i)), max(stencil.get(i)))
-                           for i in ordering])
+        expr.ispace = Space([Interval(i, min(stencil.get(i)), max(stencil.get(i)))
+                             for i in ordering]).negate()
 
         return expr
 

@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from devito.tools import as_tuple
 
-__all__ = ['NullInterval', 'Interval', 'Box']
+__all__ = ['NullInterval', 'Interval', 'Space']
 
 
 class AbstractInterval(object):
@@ -70,7 +70,7 @@ class NullInterval(AbstractInterval):
         if self.dim == o.dim:
             return o._rebuild()
         else:
-            return Box([self._rebuild(), o._rebuild()])
+            return Space([self._rebuild(), o._rebuild()])
 
     def overlap(self, o):
         return False
@@ -119,7 +119,7 @@ class Interval(AbstractInterval):
         elif o.is_Null and self.dim == o.dim:
             return self._rebuild()
         else:
-            return Box([self._rebuild(), o._rebuild()])
+            return Space([self._rebuild(), o._rebuild()])
 
     def subtract(self, o):
         if self.dim != o.dim or o.is_Null:
@@ -150,12 +150,12 @@ class Interval(AbstractInterval):
         return hash((self.dim.name, self.lower, self.upper))
 
 
-class Box(object):
+class Space(object):
 
     """
     A bag of :class:`Interval`s.
 
-    It is guaranteed that the intevals original ordering is honored.
+    The intervals input ordering is honored.
     """
 
     def __init__(self, intervals):
@@ -178,23 +178,23 @@ class Box(object):
         for i in boxes:
             for interval in i.intervals:
                 mapper.setdefault(interval.dim, []).append(interval)
-        return Box([Interval.op(v, 'intersection') for v in mapper.values()])
+        return Space([Interval.op(v, 'intersection') for v in mapper.values()])
 
     def intersection(self, *boxes):
         mapper = OrderedDict([(i.dim, [i]) for i in self.intervals])
         for i in boxes:
             for interval in i.intervals:
                 mapper.get(interval.dim, []).append(interval)
-        return Box([Interval.op(v, 'intersection') for v in mapper.values()])
+        return Space([Interval.op(v, 'intersection') for v in mapper.values()])
 
     def subtract(self, o):
         mapper = OrderedDict([(i.dim, i) for i in o.intervals])
         intervals = [i.subtract(mapper.get(i.dim, NullInterval(i.dim)))
                      for i in self.intervals]
-        return Box(intervals)
+        return Space(intervals)
 
     def drop(self, d):
-        return Box([i._rebuild() for i in self.intervals if i.dim not in as_tuple(d)])
+        return Space([i._rebuild() for i in self.intervals if i.dim not in as_tuple(d)])
 
     def negate(self):
-        return Box([i.negate() for i in self.intervals])
+        return Space([i.negate() for i in self.intervals])
